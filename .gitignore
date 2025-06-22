@@ -1,0 +1,48 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment & dependencies
+.env
+.venv
+.venv/
+venv/
+ENV/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# VSCode & PyCharm
+.vscode/
+.idea/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Flask instance folder (jika digunakan)
+instance/
+*.db
+*.sqlite3
+
+# Testing
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+test_*.log
+pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints
+
+# MacOS & system files
+.DS_Store
+Thumbs.db
