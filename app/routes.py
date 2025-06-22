@@ -182,3 +182,7 @@ def upload_file():
         # Hapus file temp setelah selesai
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+@main.route('/api', methods=['GET'])
+def ping():
+    return jsonify({"message": "API is working!"}), 200
