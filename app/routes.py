@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-import os, csv
+import io
 import tempfile
 import pandas as pd
 from .utils import preprocess_and_predict, konversi_ke_bulan_tahun, clean_text, assign_sector, model, tfidf
@@ -8,7 +8,10 @@ import re, string
 import numpy as np
 from datetime import datetime, timedelta
 from .models import db, Wisata
-from .supabase import supabase, SUPABASE_URL
+from .supabase import supabase, SUPABASE_BUCKET
+from werkzeug.security import generate_password_hash, check_password_hash
+from.jwt import generate_token, jwt_required
+import requests
 
 main = Blueprint('main', __name__)
 UPLOAD_FOLDER = 'uploads'
@@ -17,21 +20,53 @@ UPLOAD_FOLDER = 'uploads'
 def index():
     return render_template('index.html')
 
+@main.route('/files', methods=['GET'])
+def list_files():
+    try:
+        response = supabase.storage.from_(SUPABASE_BUCKET).list('datasets')
+        print("DEBUG response:", response)
+        files = [f['name'] for f in response if f.get('name') and f.get('metadata', {}).get('mimetype') != 'folder']
+        file_urls = [
+            {
+                'name': name,
+                'url': supabase.storage.from_(SUPABASE_BUCKET).get_public_url(f'datasets/{name}')
+            }
+            for name in files
+        ]
+        return jsonify(file_urls)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @main.route('/predict', methods=['POST'])
 def predict_sentiment():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-    
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(filepath)
-
     try:
-        df = pd.read_csv(filepath)
+        data = request.get_json()
+        file_url = data.get('file_url')
+
+        if not file_url:
+            return jsonify({'error': 'file_url tidak boleh kosong'}), 400
+
+        # Unduh file CSV dari Supabase Storage URL
+        response = requests.get(file_url)
+        print("DEBUG - URL:", file_url)
+        print("DEBUG - Status Code:", response.status_code)
+        print("DEBUG - Response Text:", response.text[:200]) 
+        if response.status_code != 200:
+            return jsonify({'error': 'Gagal mengunduh file dari Supabase Storage'}), 500
+
+        try:
+            # Coba baca CSV
+            file_content = io.StringIO(response.text)
+            df = pd.read_csv(file_content, encoding='utf-8')
+        except Exception:
+            # Coba alternatif encoding dan delimiter jika gagal
+            file_content = io.StringIO(response.text)
+            df = pd.read_csv(file_content, encoding='ISO-8859-1', sep=',')
+        
+        # Baca isi CSV
+        file_content = io.StringIO(response.text)
+        df = pd.read_csv(file_content)
         if 'ulasan' not in df.columns or 'waktu' not in df.columns or 'nama' not in df.columns:
             return jsonify({'error': 'Kolom "ulasan", "waktu", dan "nama" harus ada dalam file CSV'}), 400
 
@@ -136,53 +171,117 @@ def test_single_sentiment():
         return jsonify({'error': str(e)}), 500
 
 @main.route('/upload', methods=['POST'])
-def upload_file():
-    file = request.files.get('file')
-    nama_wisata = request.form.get('nama_wisata')
+def upload_csv():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
 
-    if not file or not nama_wisata:
-        return jsonify({'error': 'Nama wisata dan file diperlukan'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
 
     filename = secure_filename(file.filename)
-
-    # Simpan sementara ke file disk
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_file:
-        file.save(temp_file.name)
-        temp_path = temp_file.name
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    path = f"datasets/{timestamp}_{filename}"
 
     try:
-        # Upload ke Supabase dari file path
-        res = supabase.storage.from_('wisata-data').upload(
-            path=filename,
-            file=temp_path,  # HARUS path
-            file_options={"content-type": "text/csv"}
-        )
+        # upload ke storage Supabase
+        result = supabase.storage.from_(SUPABASE_BUCKET).upload(path, file.read())
+        if not result:
+            return jsonify({'error': 'Upload failed'}), 500
 
-        if res.get("error"):
-            return jsonify({"error": "Gagal upload ke Supabase", "detail": res["error"]["message"]}), 500
+        # dapatkan public URL
+        public_url = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(path)
+        print("DEBUG URL:", public_url)
 
-        public_url = f"{SUPABASE_URL}/storage/v1/object/public/wisatadata/{filename}"
+        return jsonify({
+            'message': 'File uploaded successfully',
+            'url': public_url
+        }), 201
 
-        # Baca CSV dari path temp
-        df = pd.read_csv(temp_path)
-        jumlah_ulasan = len(df)
-
-        # Simpan ke database
-        wisata = Wisata(
-            nama_wisata=nama_wisata,
-            jumlah_ulasan=jumlah_ulasan,
-            link_file=public_url
-        )
-        db.session.add(wisata)
-        db.session.commit()
-
-        return jsonify({'message': 'Data wisata berhasil ditambahkan'})
-
-    finally:
-        # Hapus file temp setelah selesai
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @main.route('/api', methods=['GET'])
 def ping():
     return jsonify({"message": "API is working!"}), 200
+
+@main.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not name or not email or not password:
+        return jsonify({'error': 'Semua field wajib diisi'}), 400
+
+    # Cek apakah user/email sudah ada
+    existing = supabase.table('users')\
+        .select('id')\
+        .or_(f"name.eq.{name},email.eq.{email}")\
+        .execute()
+
+    if existing.data:
+        return jsonify({'error': 'name atau email sudah digunakan'}), 400
+
+    hashed_pw = generate_password_hash(password)
+
+    result = supabase.table('users').insert({
+        'name': name,
+        'email': email,
+        'password': hashed_pw
+    }).execute()
+
+    return jsonify({'message': 'Registrasi berhasil'}), 201
+
+@main.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({'error': 'Email dan password wajib diisi'}), 400
+
+    result = supabase.table('users').select('*').eq('email', email).single().execute()
+    user = result.data
+
+    if not user or not check_password_hash(user['password'], password):
+        return jsonify({'error': 'Email atau password salah'}), 401
+
+    token = generate_token(user['id'])
+
+    return jsonify({'message': 'Login berhasil', 'token': token})
+
+@main.route('/profile', methods=['GET'])
+@jwt_required
+def profile():
+    return jsonify({'message': f'Akses berhasil untuk user ID: {request.user_id}'})
+
+@main.route('/top-files', methods=['GET'])
+def get_top_files():
+    try:
+        response = supabase.storage.from_(SUPABASE_BUCKET).list('datasets')
+        csv_files = [f for f in response if f['name'].endswith('.csv')]
+
+        file_counts = []
+
+        for file in csv_files:
+            path = f"datasets/{file['name']}"
+            public_url = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(path)
+            csv_data = requests.get(public_url)
+
+            if csv_data.status_code == 200:
+                df = pd.read_csv(io.StringIO(csv_data.text))
+                file_counts.append({
+                    'name': file['name'],
+                    'count': len(df)
+                })
+
+        # Urutkan berdasarkan count terbesar dan ambil 5
+        top_files = sorted(file_counts, key=lambda x: x['count'], reverse=True)[:5]
+
+        return jsonify(top_files)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

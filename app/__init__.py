@@ -1,7 +1,5 @@
 from flask import Flask
 from flask_cors import CORS
-from .models import db
-from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
 
@@ -12,17 +10,11 @@ def create_app():
                 template_folder='templates',
                 static_folder='static')
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    db.init_app(app)  # Inisialisasi SQLAlchemy
-    migrate = Migrate(app, db)
-
+    # Daftarkan blueprint dari routes.py
     from .routes import main
     app.register_blueprint(main)
-    CORS(app)
 
-    with app.app_context():
-        db.create_all()
+    # Aktifkan CORS untuk semua route
+    CORS(app)
 
     return app

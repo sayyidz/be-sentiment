@@ -101,30 +101,72 @@ def konversi_ke_bulan_tahun(waktu_str):
         return np.nan
 
 sektor_keywords = {
-    "kebersihan": [
-        "kotor", "bersih", "sampah", "jorok", "kebersihan", "bau", "debu", "kumuh", "rapi", "higienis"
+    "Kebersihan Toilet Buruk": [
+        "toilet", "wc", "kamar mandi", "kotor", "jorok", "bau", "mampet", "rusak", "pesing",
+        "toilet kotor", "wc bau", "toilet jorok", "bau pesing", "toilet rusak", "wc penuh", "wc mampet",
+        "bau menyengat", "kamar mandi jorok"
     ],
-    "keamanan": [
-        "aman", "keamanan", "penjaga", "satpam", "rawan", "copet", "pencuri", "pengamanan", "kriminal",
-        "tersesat", "terlantar", "terancam", "waspada"
+    "Ketidaknyamanan Area Parkir": [
+        "parkir", "penuh", "sempit", "susah", "jauh", "macet",
+        "parkiran sempit", "sulit parkir", "tidak ada parkiran", "area parkir tidak aman",
+        "parkir mahal", "parkir jauh", "tidak tertata", "susah keluar"
     ],
-    "fasilitas": [
-        "toilet", "parkir", "wifi", "kursi", "tempat sampah", "fasilitas", "mushola", "tempat duduk",
-        "loker", "AC", "air", "penerangan", "kamar mandi", "tempat istirahat", "lift", "tangga", "keran"
+    "Pelayanan Petugas": [
+        "petugas", "staff", "cs", "pegawai", "jutek", "kasar", "lambat", "tidak ramah", "tidak membantu",
+        "pelayanan lambat", "tidak sopan", "kurang membantu", "tidak informatif"
     ],
-    "harga": [
-        "mahal", "murah", "harga", "biaya", "bayar", "tiket", "tarif", "ongkos", "diskon", "gratis",
-        "cashless", "promo", "pembayaran", "terjangkau", "uang"
+    "Harga Tidak Sesuai": [
+        "mahal", "murah", "harga", "biaya", "tiket", "ongkos", "tidak sebanding", "kemahalan",
+        "harga mahal", "biaya tinggi", "harga tidak sesuai", "tiket terlalu mahal", "pelayanan tidak sepadan"
     ],
-    "pelayanan": [
-        "ramah", "layanan", "petugas", "pegawai", "staff", "respon", "bantuan", "sopan", "melayani",
-        "informasi", "customer service", "tidak membantu", "penjelasan", "penyambutan"
+    "Antrian Panjang dan Tidak Teratur": [
+        "antri", "antrian", "lama", "penuh", "desak", "tidak tertib", "berdesakan",
+        "antrian panjang", "tidak tertib", "berdesakan", "antri lama", "sistem antri buruk",
+        "tidak ada nomor antri", "rebutan antrian"
     ],
-    "akses": [
-        "jalan", "akses", "macet", "transportasi", "angkutan", "rute", "parkir", "jalan masuk",
-        "petunjuk arah", "maps", "jalan kaki", "kendaraan", "lokasi sulit", "jauh", "dekat"
+    "Transportasi dan Lokasi Sulit": [
+        "macet", "terpencil", "jauh", "akses", "sulit", "transportasi", "rusak", "tidak dijangkau",
+        "sulit dijangkau", "transportasi terbatas", "tidak ada angkutan umum", "akses buruk", 
+        "jalan rusak", "tidak ada petunjuk arah"
+    ],
+    "Kurangnya Informasi dan Petunjuk Arah": [
+        "bingung", "tidak tahu", "tidak jelas", "minim", "kurang", "informasi", "arah", "papan",
+        "tidak ada petunjuk", "minim informasi", "bingung arah", "tidak ada papan informasi",
+        "kurang penjelasan", "tidak diarahkan"
+    ],
+    "Kerusakan atau Ketidaksiapan Fasilitas": [
+        "rusak", "bocor", "mati", "patah", "tidak berfungsi", "tidak tersedia", "lampu", "ac", "lift", "keran",
+        "fasilitas rusak", "kursi patah", "atap bocor", "lampu mati", "AC tidak dingin",
+        "keran rusak", "wifi mati", "kunci rusak"
+    ],
+    "Kondisi Lingkungan Kotor": [
+        "sampah", "jorok", "kotor", "kumuh", "tidak rapi", "bau", "buruk", "tidak terurus", "semrawut",
+        "lingkungan kumuh", "banyak sampah", "tidak dibersihkan", "tanaman mati", 
+        "pemandangan buruk", "bau tak sedap"
+    ],
+    "Tingkat Keamanan Rendah": [
+        "tidak aman", "rawan", "copet", "pencuri", "penjaga", "satpam", "pengawasan", "terancam",
+        "kehilangan", "keamanan", "penipuan", "kerusuhan"
+    ],
+    "Gangguan dari Pengunjung Lain": [
+        "ribut", "bising", "perokok", "gaduh", "berisik", "kasar", "tidak nyaman", "ramai",
+        "pengunjung ribut", "anak-anak berisik", "pengunjung kasar", "bikin gaduh", "rokok"
+    ],
+    "Ketersediaan Tempat Duduk": [
+        "kursi", "duduk", "tidak ada kursi", "tidak bisa duduk", "area tunggu sempit",
+        "kurang tempat duduk", "duduk di lantai", "tempat duduk penuh"
+    ],
+    "Kondisi Cuaca": [
+        "panas", "hujan", "banjir", "becek", "cuaca", "terik", "berlumpur",
+        "panas terik", "tidak ada peneduh", "hujan deras", "tidak nyaman karena cuaca"
+    ],
+    "Masalah Pemesanan Tiket": [
+        "gagal", "sulit", "error", "habis", "lambat", "tidak bisa", "pesan", "beli", "booking",
+        "gagal pesan tiket", "aplikasi error", "tiket habis", "tidak bisa beli tiket",
+        "susah akses aplikasi", "website lambat"
     ]
 }
+
 
 def assign_sector(text):
     text = text.lower()
