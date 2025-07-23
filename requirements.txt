@@ -10,4 +10,4 @@ seaborn==0.13.2
 matplotlib==3.8.4
 joblib==1.4.2
 supabase==2.16.0
-https://fe-sentiment-six.vercel.app/
+requests==2.31.0
