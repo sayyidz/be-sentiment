@@ -11,7 +11,7 @@ from .models import db, Wisata
 from .supabase import supabase, SUPABASE_BUCKET
 from werkzeug.security import generate_password_hash, check_password_hash
 from.jwt import generate_token, jwt_required
-import requests
+# import requests
 
 main = Blueprint('main', __name__)
 UPLOAD_FOLDER = 'uploads'
