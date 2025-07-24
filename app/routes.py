@@ -49,9 +49,6 @@ def predict_sentiment():
 
         # Unduh file CSV dari Supabase Storage URL
         response = requests.get(file_url)
-        print("DEBUG - URL:", file_url)
-        print("DEBUG - Status Code:", response.status_code)
-        print("DEBUG - Response Text:", response.text[:200]) 
         if response.status_code != 200:
             return jsonify({'error': 'Gagal mengunduh file dari Supabase Storage'}), 500
 
@@ -84,17 +81,20 @@ def predict_sentiment():
         # Tambahkan kolom 'prediksi' ke df
         df['prediksi'] = predicted_df['prediksi']
 
-        # Hitung jumlah komentar negatif per sektor
+        # Hitung 5 sektor dengan komentar negatif terbanyak
         negatif_per_sektor = df[df['prediksi'] == -1]['sektor'].value_counts()
         negatif_per_sektor = negatif_per_sektor[negatif_per_sektor.index != 'lainnya']
+        negatif_per_sektor = negatif_per_sektor.head(5)  # Ambil 5 teratas
         negatif_chart_data = negatif_per_sektor.to_dict()
 
+        # Komentar negatif per bulan
         df_negatif = df[df['prediksi'] == -1]
         komentar_negatif_per_bulan = df_negatif.groupby('bulan_tahun').size().reset_index(name='jumlah_negatif')
         komentar_negatif_per_bulan['bulan_tahun_dt'] = pd.to_datetime(komentar_negatif_per_bulan['bulan_tahun'], format='%B %Y')
         komentar_negatif_per_bulan = komentar_negatif_per_bulan.sort_values(by='bulan_tahun_dt')
         komentar_negatif_per_bulan['bulan_tahun'] = komentar_negatif_per_bulan['bulan_tahun_dt'].dt.strftime('%B %Y')
         komentar_negatif_per_bulan = komentar_negatif_per_bulan[['bulan_tahun', 'jumlah_negatif']]
+
 
         # Ubah ke format dict
         bulanan_data = komentar_negatif_per_bulan.to_dict(orient='records')
@@ -108,22 +108,28 @@ def predict_sentiment():
         negatif_per_bulan_sektor = negatif_per_bulan_sektor.sort_values(by=['bulan_tahun_dt', 'jumlah_komentar_negatif'], ascending=[False, False])
         negatif_per_bulan_sektor['bulan_tahun'] = negatif_per_bulan_sektor['bulan_tahun_dt'].dt.strftime('%B %Y')
 
-        top5 = negatif_per_bulan_sektor.groupby('bulan_tahun').head(5)
+        top3 = negatif_per_bulan_sektor.groupby('bulan_tahun').head(3)
+        print("=== Data Top 3 ===")
+        print(top3.to_string(index=False))
 
         # Buat struktur data untuk Chart.js
-        bulan_list = sorted(top5['bulan_tahun'].unique(), key=lambda x: pd.to_datetime(x, format='%B %Y'))
-        sektor_list = top5['sektor'].unique()
+        bulan_list = sorted(top3['bulan_tahun'].unique(), key=lambda x: pd.to_datetime(x, format='%B %Y'))
+        sektor_list = top3['sektor'].unique()
 
         chart_data = {sektor: [] for sektor in sektor_list}
 
         for bulan in bulan_list:
-            data_bulan = top5[top5['bulan_tahun'] == bulan]
+            data_bulan = top3[top3['bulan_tahun'] == bulan]
             for sektor in sektor_list:
                 val = data_bulan[data_bulan['sektor'] == sektor]['jumlah_komentar_negatif']
                 if not val.empty:
                     chart_data[sektor].append(int(val.values[0]))
                 else:
                     chart_data[sektor].append(0)
+
+        print("=== Chart Data per Sektor ===")
+        for sektor in chart_data:
+            print(f"{sektor}: {chart_data[sektor]}")
 
         return jsonify({
             'data': result_data,

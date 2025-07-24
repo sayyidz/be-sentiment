@@ -101,66 +101,66 @@ def konversi_ke_bulan_tahun(waktu_str):
         return np.nan
 
 sektor_keywords = {
-    "Kebersihan Toilet Buruk": [
+    "Toilet Cleanliness": [
         "toilet", "wc", "kamar mandi", "kotor", "jorok", "bau", "mampet", "rusak", "pesing",
         "toilet kotor", "wc bau", "toilet jorok", "bau pesing", "toilet rusak", "wc penuh", "wc mampet",
         "bau menyengat", "kamar mandi jorok"
     ],
-    "Ketidaknyamanan Area Parkir": [
+    "Parking Area": [
         "parkir", "penuh", "sempit", "susah", "jauh", "macet",
         "parkiran sempit", "sulit parkir", "tidak ada parkiran", "area parkir tidak aman",
         "parkir mahal", "parkir jauh", "tidak tertata", "susah keluar"
     ],
-    "Pelayanan Petugas": [
+    "Poor Staff Service": [
         "petugas", "staff", "cs", "pegawai", "jutek", "kasar", "lambat", "tidak ramah", "tidak membantu",
         "pelayanan lambat", "tidak sopan", "kurang membantu", "tidak informatif"
     ],
-    "Harga Tidak Sesuai": [
+    "Price": [
         "mahal", "murah", "harga", "biaya", "tiket", "ongkos", "tidak sebanding", "kemahalan",
         "harga mahal", "biaya tinggi", "harga tidak sesuai", "tiket terlalu mahal", "pelayanan tidak sepadan"
     ],
-    "Antrian Panjang dan Tidak Teratur": [
+    "Long and Disorganized Queues": [
         "antri", "antrian", "lama", "penuh", "desak", "tidak tertib", "berdesakan",
         "antrian panjang", "tidak tertib", "berdesakan", "antri lama", "sistem antri buruk",
         "tidak ada nomor antri", "rebutan antrian"
     ],
-    "Transportasi dan Lokasi Sulit": [
+    "Difficult Location": [
         "macet", "terpencil", "jauh", "akses", "sulit", "transportasi", "rusak", "tidak dijangkau",
         "sulit dijangkau", "transportasi terbatas", "tidak ada angkutan umum", "akses buruk", 
         "jalan rusak", "tidak ada petunjuk arah"
     ],
-    "Kurangnya Informasi dan Petunjuk Arah": [
+    "Lack of Information": [
         "bingung", "tidak tahu", "tidak jelas", "minim", "kurang", "informasi", "arah", "papan",
         "tidak ada petunjuk", "minim informasi", "bingung arah", "tidak ada papan informasi",
         "kurang penjelasan", "tidak diarahkan"
     ],
-    "Kerusakan atau Ketidaksiapan Fasilitas": [
+    "Broken Facilities": [
         "rusak", "bocor", "mati", "patah", "tidak berfungsi", "tidak tersedia", "lampu", "ac", "lift", "keran",
         "fasilitas rusak", "kursi patah", "atap bocor", "lampu mati", "AC tidak dingin",
         "keran rusak", "wifi mati", "kunci rusak"
     ],
-    "Kondisi Lingkungan Kotor": [
+    "Dirty Surroundings": [
         "sampah", "jorok", "kotor", "kumuh", "tidak rapi", "bau", "buruk", "tidak terurus", "semrawut",
         "lingkungan kumuh", "banyak sampah", "tidak dibersihkan", "tanaman mati", 
         "pemandangan buruk", "bau tak sedap"
     ],
-    "Tingkat Keamanan Rendah": [
+    "Low Security Level": [
         "tidak aman", "rawan", "copet", "pencuri", "penjaga", "satpam", "pengawasan", "terancam",
         "kehilangan", "keamanan", "penipuan", "kerusuhan"
     ],
-    "Gangguan dari Pengunjung Lain": [
+    "Distubance From Visitors": [
         "ribut", "bising", "perokok", "gaduh", "berisik", "kasar", "tidak nyaman", "ramai",
         "pengunjung ribut", "anak-anak berisik", "pengunjung kasar", "bikin gaduh", "rokok"
     ],
-    "Ketersediaan Tempat Duduk": [
+    "Seating Availability": [
         "kursi", "duduk", "tidak ada kursi", "tidak bisa duduk", "area tunggu sempit",
         "kurang tempat duduk", "duduk di lantai", "tempat duduk penuh"
     ],
-    "Kondisi Cuaca": [
+    "Weather Conditions": [
         "panas", "hujan", "banjir", "becek", "cuaca", "terik", "berlumpur",
         "panas terik", "tidak ada peneduh", "hujan deras", "tidak nyaman karena cuaca"
     ],
-    "Masalah Pemesanan Tiket": [
+    "Ticket Booking Issue": [
         "gagal", "sulit", "error", "habis", "lambat", "tidak bisa", "pesan", "beli", "booking",
         "gagal pesan tiket", "aplikasi error", "tiket habis", "tidak bisa beli tiket",
         "susah akses aplikasi", "website lambat"
