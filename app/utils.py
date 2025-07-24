@@ -6,10 +6,18 @@ import seaborn as sns
 from datetime import datetime, timedelta
 import numpy as np
 import re, string
+import os
 
 # Load model dan TF-IDF
-model = joblib.load('app/model/svm_model.pkl')
-tfidf = joblib.load('app/model/tfidf.pkl')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, 'model', 'tfidf.pkl')
+MODEL_PATH_SVM = os.path.join(BASE_DIR, 'model', 'svm_model.pkl')
+
+tfidf = joblib.load(MODEL_PATH)
+model = joblib.load(MODEL_PATH_SVM)
+
+print("TFIDF fitted:", hasattr(tfidf, 'idf_'))
+print("Vocab size:", len(getattr(tfidf, 'vocabulary_', {})))
 
 stopwords_id = set([
     "yang", "dan", "di", "ke", "dari", "untuk", "dengan", "ada", "karena", "saja", "lebih", "tidak", "bukan", "atau",
