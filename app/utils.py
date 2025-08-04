@@ -9,15 +9,8 @@ import re, string
 import os
 
 # Load model dan TF-IDF
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'model', 'tfidf.pkl')
-MODEL_PATH_SVM = os.path.join(BASE_DIR, 'model', 'svm_model.pkl')
-
-tfidf = joblib.load(MODEL_PATH)
-model = joblib.load(MODEL_PATH_SVM)
-
-print("TFIDF fitted:", hasattr(tfidf, 'idf_'))
-print("Vocab size:", len(getattr(tfidf, 'vocabulary_', {})))
+model = joblib.load('app/model/svm_model.pkl')
+tfidf = joblib.load('app/model/tfidf.pkl')
 
 stopwords_id = set([
     "yang", "dan", "di", "ke", "dari", "untuk", "dengan", "ada", "karena", "saja", "lebih", "tidak", "bukan", "atau",
@@ -79,33 +72,49 @@ def konversi_ke_bulan_tahun(waktu_str):
     now = datetime.now()
     if pd.isna(waktu_str):
         return np.nan
-    waktu_str = str(waktu_str).lower()
+
+    waktu_str = str(waktu_str).lower().strip()
+    waktu_str = waktu_str.replace("diedit", "").replace("yang lalu", "").replace("lalu", "").strip()
 
     try:
         if "detik" in waktu_str or "menit" in waktu_str or "jam" in waktu_str:
             tanggal = now
         elif "hari" in waktu_str:
-            hari = int(waktu_str.split()[0])
+            if "sehari" in waktu_str:
+                hari = 1
+            else:
+                hari = int(waktu_str.split()[0])
             tanggal = now - timedelta(days=hari)
         elif "minggu" in waktu_str:
-            minggu = int(waktu_str.split()[0]) if waktu_str.split()[0].isdigit() else 1
+            if "seminggu" in waktu_str:
+                minggu = 1
+            else:
+                minggu = int(waktu_str.split()[0])
             tanggal = now - timedelta(weeks=minggu)
         elif "bulan" in waktu_str:
-            bulan = int(waktu_str.split()[0]) if waktu_str.split()[0].isdigit() else 1
+            if "sebulan" in waktu_str:
+                bulan = 1
+            else:
+                bulan = int(waktu_str.split()[0])
             bulan_lalu = now.month - bulan
             tahun = now.year
-            if bulan_lalu <= 0:
+            while bulan_lalu <= 0:
                 bulan_lalu += 12
                 tahun -= 1
             tanggal = datetime(tahun, bulan_lalu, 1)
         elif "tahun" in waktu_str:
-            tahun = now.year - int(waktu_str.split()[0]) if waktu_str.split()[0].isdigit() else 1
+            if "setahun" in waktu_str:
+                tahun_lalu = 1
+            else:
+                tahun_lalu = int(waktu_str.split()[0])
+            tahun = max(now.year - tahun_lalu, 1900)
             tanggal = datetime(tahun, now.month, 1)
         else:
             return np.nan
 
         return tanggal.strftime('%B %Y')
-    except:
+    except Exception as e:
+        print(f"❌ Gagal mengkonversi '{waktu_str}': {e}")
         return np.nan
 
 sektor_keywords = {

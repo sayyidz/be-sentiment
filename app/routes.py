@@ -24,7 +24,6 @@ def index():
 def list_files():
     try:
         response = supabase.storage.from_(SUPABASE_BUCKET).list('datasets')
-        print("DEBUG response:", response)
         files = [f['name'] for f in response if f.get('name') and f.get('metadata', {}).get('mimetype') != 'folder']
         file_urls = [
             {
@@ -69,6 +68,11 @@ def predict_sentiment():
 
         # Tambahkan kolom bulan_tahun
         df['bulan_tahun'] = df['waktu'].apply(konversi_ke_bulan_tahun)
+        print("=== Contoh nilai bulan_tahun ===")
+        print(df['bulan_tahun'].unique()[:10])
+
+        print("=== Contoh nilai waktu ===")
+        print(df['waktu'].unique()[:10])
 
         # Bersihkan teks dan klasifikasi sektor
         df['sektor'] = df['ulasan'].astype(str).apply(lambda x: assign_sector(clean_text(x)))
@@ -90,7 +94,8 @@ def predict_sentiment():
         # Komentar negatif per bulan
         df_negatif = df[df['prediksi'] == -1]
         komentar_negatif_per_bulan = df_negatif.groupby('bulan_tahun').size().reset_index(name='jumlah_negatif')
-        komentar_negatif_per_bulan['bulan_tahun_dt'] = pd.to_datetime(komentar_negatif_per_bulan['bulan_tahun'], format='%B %Y')
+        komentar_negatif_per_bulan['bulan_tahun_dt'] = pd.to_datetime(komentar_negatif_per_bulan['bulan_tahun'], format='%B %Y', errors='coerce')
+        komentar_negatif_per_bulan = komentar_negatif_per_bulan.dropna(subset=['bulan_tahun_dt'])
         komentar_negatif_per_bulan = komentar_negatif_per_bulan.sort_values(by='bulan_tahun_dt')
         komentar_negatif_per_bulan['bulan_tahun'] = komentar_negatif_per_bulan['bulan_tahun_dt'].dt.strftime('%B %Y')
         komentar_negatif_per_bulan = komentar_negatif_per_bulan[['bulan_tahun', 'jumlah_negatif']]
@@ -109,8 +114,6 @@ def predict_sentiment():
         negatif_per_bulan_sektor['bulan_tahun'] = negatif_per_bulan_sektor['bulan_tahun_dt'].dt.strftime('%B %Y')
 
         top3 = negatif_per_bulan_sektor.groupby('bulan_tahun').head(3)
-        print("=== Data Top 3 ===")
-        print(top3.to_string(index=False))
 
         # Buat struktur data untuk Chart.js
         bulan_list = sorted(top3['bulan_tahun'].unique(), key=lambda x: pd.to_datetime(x, format='%B %Y'))
@@ -126,10 +129,6 @@ def predict_sentiment():
                     chart_data[sektor].append(int(val.values[0]))
                 else:
                     chart_data[sektor].append(0)
-
-        print("=== Chart Data per Sektor ===")
-        for sektor in chart_data:
-            print(f"{sektor}: {chart_data[sektor]}")
 
         return jsonify({
             'data': result_data,
@@ -197,7 +196,6 @@ def upload_csv():
 
         # dapatkan public URL
         public_url = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(path)
-        print("DEBUG URL:", public_url)
 
         return jsonify({
             'message': 'File uploaded successfully',
